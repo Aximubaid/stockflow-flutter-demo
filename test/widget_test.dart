@@ -35,6 +35,14 @@ class FakeRepository implements StoreRepository {
   @override
   Future<List<SalesOrder>> orders() async => [
     SalesOrder(
+      id: 'SF-1048',
+      customer: 'Dispatch Demo Company',
+      date: DateTime(2026, 8, 16),
+      total: 842,
+      items: 12,
+      status: OrderStatus.processing,
+    ),
+    SalesOrder(
       id: 'SF-1',
       customer: 'Example Test Company',
       date: DateTime(2026),
@@ -282,6 +290,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('profile-page')), findsOneWidget);
     expect(find.text('Alex Demo'), findsOneWidget);
+  });
+
+  testWidgets('low-stock notification opens filtered inventory and returns', (
+    tester,
+  ) async {
+    await pumpStockFlow(tester);
+    await tester.tap(find.byTooltip('Notifications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('notification-low-stock')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('inventory-page')), findsOneWidget);
+    expect(
+      tester
+          .widget<FilterChip>(find.byKey(const ValueKey('low-stock-filter')))
+          .selected,
+      isTrue,
+    );
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('notifications-page')), findsOneWidget);
+  });
+
+  testWidgets('dispatch notification opens SF-1048 details and returns', (
+    tester,
+  ) async {
+    await pumpStockFlow(tester);
+    await tester.tap(find.byTooltip('Notifications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('notification-order-ready')));
+    await tester.pumpAndSettle();
+    expect(find.text('Order details'), findsOneWidget);
+    expect(find.text('SF-1048'), findsOneWidget);
+    expect(find.byKey(const ValueKey('status-processing')), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('notifications-page')), findsOneWidget);
   });
 
   testWidgets('order statuses render without overflow at narrow width', (

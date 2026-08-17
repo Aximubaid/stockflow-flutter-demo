@@ -1262,36 +1262,61 @@ class RevenueDetailsPage extends StatelessWidget {
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
   @override
-  Widget build(BuildContext context) => DetailScaffold(
-    title: 'Notifications',
-    child: ListView(
-      key: const ValueKey('notifications-page'),
-      padding: const EdgeInsets.all(20),
-      children: const [
-        NotificationTile(
-          icon: Icons.warning_amber_rounded,
-          color: Colors.orange,
-          title: 'Low-stock alert',
-          message: 'Two products have reached their reorder threshold.',
-          time: '10 min ago',
-        ),
-        NotificationTile(
-          icon: Icons.local_shipping_outlined,
-          color: StockFlowTheme.blue,
-          title: 'Order ready for dispatch',
-          message: 'Order SF-1048 is ready for the next fulfillment step.',
-          time: '1 hr ago',
-        ),
-        NotificationTile(
-          icon: Icons.cloud_done_outlined,
-          color: StockFlowTheme.mint,
-          title: 'Synchronization completed',
-          message: 'Offline inventory changes are safely synchronized.',
-          time: 'Today',
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final dispatchOrder = context
+        .watch<StoreController>()
+        .orders
+        .where((order) => order.id == 'SF-1048')
+        .firstOrNull;
+    return DetailScaffold(
+      title: 'Notifications',
+      child: ListView(
+        key: const ValueKey('notifications-page'),
+        padding: const EdgeInsets.all(20),
+        children: [
+          NotificationTile(
+            key: const ValueKey('notification-low-stock'),
+            icon: Icons.warning_amber_rounded,
+            color: Colors.orange,
+            title: 'Low-stock alert',
+            message: 'Two products have reached their reorder threshold.',
+            time: '10 min ago',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const DetailScaffold(
+                  title: 'Inventory',
+                  child: InventoryPage(lowStockInitially: true),
+                ),
+              ),
+            ),
+          ),
+          NotificationTile(
+            key: const ValueKey('notification-order-ready'),
+            icon: Icons.local_shipping_outlined,
+            color: StockFlowTheme.blue,
+            title: 'Order ready for dispatch',
+            message: 'Order SF-1048 is ready for the next fulfillment step.',
+            time: '1 hr ago',
+            onTap: dispatchOrder == null
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => OrderDetailsPage(order: dispatchOrder),
+                    ),
+                  ),
+          ),
+          const NotificationTile(
+            key: ValueKey('notification-sync'),
+            icon: Icons.cloud_done_outlined,
+            color: StockFlowTheme.mint,
+            title: 'Synchronization completed',
+            message: 'Offline inventory changes are safely synchronized.',
+            time: 'Today',
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class ProfilePage extends StatelessWidget {
@@ -1367,51 +1392,64 @@ class NotificationTile extends StatelessWidget {
     required this.title,
     required this.message,
     required this.time,
+    this.onTap,
   });
   final IconData icon;
   final Color color;
   final String title, message, time;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color),
               ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(message, style: const TextStyle(color: Colors.black54)),
-                  const SizedBox(height: 6),
-                  Text(
-                    time,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 3),
+                    Text(
+                      message,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      time,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              if (onTap != null) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+              ],
+            ],
+          ),
         ),
       ),
     ),
