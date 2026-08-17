@@ -66,4 +66,12 @@ class StoreController extends ChangeNotifier {
     notifyListeners();
     await _repository.saveProducts(products);
   }
+
+  Future<void> updateProduct(Product updated) async {
+    products = products
+        .map((product) => product.id == updated.id ? updated : product)
+        .toList();
+    notifyListeners();
+    await _repository.saveProducts(products);
+  }
 }

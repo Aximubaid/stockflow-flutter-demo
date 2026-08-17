@@ -15,9 +15,11 @@ The demo runs immediately with fictional local data—no account, API key, or Fi
 ## What this project demonstrates
 
 - Responsive Material 3 UI for phone, tablet, desktop, and web
-- Dashboard KPIs, low-stock visibility, and a seven-day sales chart
-- Inventory search, category/SKU matching, low-stock filtering, validation, add, and delete workflows
-- Order and customer views with loading, empty, error, sync, and notification states
+- Actionable dashboard KPIs with revenue, order, inventory, and low-stock drill-downs
+- Inventory search, low-stock filtering, product details, validation, add, edit, and delete workflows
+- Reusable responsive order cards, status chips, order details, and customer order-history navigation
+- Lightweight notifications and a fictional demo-account profile
+- Loading, empty, error, synchronization, and offline-ready states
 - Offline inventory persistence with `SharedPreferences`
 - Repository-driven architecture that separates UI, domain models, and data access
 - Production integration seams for Firebase Auth, Cloud Firestore, FCM, and a REST exchange-rate service
@@ -86,7 +88,8 @@ flutter run -d ios
 ```bash
 flutter analyze
 flutter test
-flutter build web
+flutter build web --release
+flutter build apk --debug
 ```
 
 GitHub Actions runs static analysis and tests for every push and pull request. The committed golden tests protect both mobile and desktop dashboard presentation.
@@ -107,12 +110,37 @@ Firebase configuration, signing material, environment files, and private keys ar
 
 This repository is a standalone portfolio demonstration and is not connected to any client system or production database. All names, businesses, orders, SKUs, metrics, and `.example` email addresses are fictional. No private client data, personal contact information, Firebase project configuration, signing keys, or secrets are included.
 
+## Portfolio screenshots
+
+The final images in `outputs/screenshots/` are captured from the real compiled web application:
+
+- Mobile dashboard
+- Mobile inventory
+- Mobile orders with responsive status chips
+- Mobile customer details and recent-order history
+- Mobile order details
+- Mobile notifications
+- Desktop responsive dashboard
+
+## 45–60 second demo-video shot list
+
+1. **0–5s — Overview:** introduce the polished responsive dashboard.
+2. **5–12s — Low stock:** tap the Low Stock metric and show the pre-filtered inventory.
+3. **12–20s — Product workflow:** search for a product, open Product Details, and briefly show Edit.
+4. **20–28s — Orders:** open Orders and select an order to show its complete status and details.
+5. **28–38s — Customers:** open a customer, explain total versus recent orders, and drill into an order.
+6. **38–45s — Notifications:** show the fictional low-stock, dispatch, and synchronization alerts.
+7. **45–50s — Profile:** open the AD avatar and show the credential-free demo account.
+8. **50–60s — Finish:** return to Overview and briefly show the adaptive desktop layout.
+
+Record only the application. Do not show terminals, source code, private tabs, credentials, configuration files, or personal information.
+
 ## Project status
 
 - Portfolio demo: complete
 - Local/offline workflow: implemented
 - Firebase/REST/FCM: integration seams included; deployment credentials intentionally omitted
-- Automated checks: analysis, controller/widget tests, and golden tests
+- Automated checks: analysis, controller/widget interaction tests, responsive overflow coverage, and golden tests
 
 ## Client summary
 

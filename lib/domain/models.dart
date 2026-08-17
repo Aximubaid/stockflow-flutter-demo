@@ -14,6 +14,22 @@ class Product {
   final double price;
   final int stock, reorderAt;
   bool get isLowStock => stock <= reorderAt;
+  Product copyWith({
+    String? name,
+    String? sku,
+    String? category,
+    double? price,
+    int? stock,
+    int? reorderAt,
+  }) => Product(
+    id: id,
+    name: name ?? this.name,
+    sku: sku ?? this.sku,
+    category: category ?? this.category,
+    price: price ?? this.price,
+    stock: stock ?? this.stock,
+    reorderAt: reorderAt ?? this.reorderAt,
+  );
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
