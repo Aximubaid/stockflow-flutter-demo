@@ -27,7 +27,7 @@ void main() {
       find.byType(StockFlowApp),
       matchesGoldenFile('goldens/stockflow-mobile-dashboard.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('desktop portfolio dashboard', (tester) async {
     await renderDashboard(tester, const Size(1280, 800));
@@ -35,5 +35,5 @@ void main() {
       find.byType(StockFlowApp),
       matchesGoldenFile('goldens/stockflow-desktop-dashboard.png'),
     );
-  });
+  }, tags: 'golden');
 }
