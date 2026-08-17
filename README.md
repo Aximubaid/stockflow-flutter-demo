@@ -69,7 +69,7 @@ The portfolio build intentionally uses `LocalDemoRepository`, keeping the review
 ### Start the demo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/stockflow-flutter-demo.git
+git clone https://github.com/Aximubaid/stockflow-flutter-demo.git
 cd stockflow-flutter-demo
 flutter pub get
 flutter run
