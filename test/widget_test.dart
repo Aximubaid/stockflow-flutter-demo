@@ -9,17 +9,19 @@ import 'package:stockflow/features/store_controller.dart';
 class FakeRepository implements StoreRepository {
   List<Product> saved = [];
   @override
-  Future<List<Product>> products() async => [
-    const Product(
-      id: '1',
-      name: 'Test Product',
-      sku: 'SKU-1',
-      category: 'Office',
-      price: 20,
-      stock: 3,
-      reorderAt: 5,
-    ),
-  ];
+  Future<List<Product>> products() async => saved.isNotEmpty
+      ? saved
+      : [
+          const Product(
+            id: '1',
+            name: 'Test Product',
+            sku: 'SKU-1',
+            category: 'Office',
+            price: 20,
+            stock: 3,
+            reorderAt: 5,
+          ),
+        ];
   @override
   Future<List<Customer>> customers() async => [
     const Customer(
@@ -81,6 +83,105 @@ void main() {
     expect(repo.saved.length, 1);
     await controller.updateProduct(repo.saved.single.copyWith(name: 'Updated'));
     expect(repo.saved.single.name, 'Updated');
+
+    final restartedController = StoreController(repo);
+    await restartedController.load();
+    expect(restartedController.products.single.name, 'Updated');
+  });
+
+  testWidgets('adding a product validates, persists, and closes cleanly', (
+    tester,
+  ) async {
+    final repo = FakeRepository();
+    final controller = StoreController(repo);
+    await controller.load();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: controller,
+        child: const StockFlowApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.inventory_2_outlined).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add product'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Product name'),
+      'New Kitchen Item',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Category'),
+      'Kitchen',
+    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Price'), '5');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Stock'), '10');
+    await tester.tap(find.byKey(const ValueKey('save-product')));
+    await tester.pump();
+    expect(find.text('Required'), findsOneWidget);
+    expect(find.text('Add new product'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'SKU'),
+      'KIT-5002',
+    );
+    await tester.tap(find.byKey(const ValueKey('save-product')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add new product'), findsNothing);
+    expect(find.text('New Kitchen Item'), findsOneWidget);
+    expect(find.text('10 in stock'), findsOneWidget);
+    expect(find.text('Product added successfully.'), findsOneWidget);
+    expect(repo.saved.any((product) => product.sku == 'KIT-5002'), isTrue);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byTooltip('Product actions').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Product name'),
+      'Updated Kitchen Item',
+    );
+    await tester.tap(find.byKey(const ValueKey('save-product')));
+    await tester.pumpAndSettle();
+    expect(find.text('Updated Kitchen Item'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Product actions').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(find.text('Updated Kitchen Item'), findsNothing);
+
+    await tester.tap(find.text('Add product'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Product name'),
+      'Added Again',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'SKU'),
+      'KIT-5003',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Category'),
+      'Kitchen',
+    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Price'), '6');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Stock'), '12');
+    await tester.tap(find.byKey(const ValueKey('save-product')));
+    await tester.pumpAndSettle();
+    expect(find.text('Added Again'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.grid_view_rounded).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.inventory_2_outlined).last);
+    await tester.pumpAndSettle();
+    expect(find.text('Added Again'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
   testWidgets('renders dashboard and navigates to inventory', (tester) async {
     final controller = StoreController(FakeRepository());

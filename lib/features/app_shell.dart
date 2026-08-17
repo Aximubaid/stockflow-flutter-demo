@@ -1680,161 +1680,201 @@ String money(double value) =>
     NumberFormat.simpleCurrency(decimalDigits: 0).format(value);
 
 Future<void> showProductForm(BuildContext context, {Product? product}) async {
-  final key = GlobalKey<FormState>();
-  final name = TextEditingController(text: product?.name),
-      sku = TextEditingController(text: product?.sku),
-      category = TextEditingController(text: product?.category),
-      price = TextEditingController(text: product?.price.toStringAsFixed(0)),
-      stock = TextEditingController(text: product?.stock.toString());
-  await showModalBottomSheet<void>(
+  final saved = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (sheetContext) => Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        0,
-        20,
-        MediaQuery.viewInsetsOf(sheetContext).bottom + 24,
+    builder: (_) => _ProductFormSheet(product: product),
+  );
+  if (saved == true && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          product == null
+              ? 'Product added successfully.'
+              : 'Product updated successfully.',
+        ),
       ),
-      child: Form(
-        key: key,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                product == null ? 'Add new product' : 'Edit product',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 18),
-              TextFormField(
-                controller: name,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(labelText: 'Product name'),
-                validator: requiredField,
-              ),
-              const SizedBox(height: 10),
-              LayoutBuilder(
-                builder: (context, constraints) => constraints.maxWidth < 380
-                    ? Column(
-                        children: [
-                          TextFormField(
-                            controller: sku,
+    );
+  }
+}
+
+class _ProductFormSheet extends StatefulWidget {
+  const _ProductFormSheet({this.product});
+
+  final Product? product;
+
+  @override
+  State<_ProductFormSheet> createState() => _ProductFormSheetState();
+}
+
+class _ProductFormSheetState extends State<_ProductFormSheet> {
+  final _key = GlobalKey<FormState>();
+  late final TextEditingController _name;
+  late final TextEditingController _sku;
+  late final TextEditingController _category;
+  late final TextEditingController _price;
+  late final TextEditingController _stock;
+
+  @override
+  void initState() {
+    super.initState();
+    final product = widget.product;
+    _name = TextEditingController(text: product?.name);
+    _sku = TextEditingController(text: product?.sku);
+    _category = TextEditingController(text: product?.category);
+    _price = TextEditingController(text: product?.price.toStringAsFixed(0));
+    _stock = TextEditingController(text: product?.stock.toString());
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _sku.dispose();
+    _category.dispose();
+    _price.dispose();
+    _stock.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_key.currentState!.validate()) return;
+    final controller = context.read<StoreController>();
+    final product = widget.product;
+    if (product == null) {
+      await controller.addProduct(
+        name: _name.text.trim(),
+        sku: _sku.text.trim(),
+        category: _category.text.trim(),
+        price: double.parse(_price.text),
+        stock: int.parse(_stock.text),
+      );
+    } else {
+      await controller.updateProduct(
+        product.copyWith(
+          name: _name.text.trim(),
+          sku: _sku.text.trim(),
+          category: _category.text.trim(),
+          price: double.parse(_price.text),
+          stock: int.parse(_stock.text),
+        ),
+      );
+    }
+    if (mounted) Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(
+      20,
+      0,
+      20,
+      MediaQuery.viewInsetsOf(context).bottom + 24,
+    ),
+    child: Form(
+      key: _key,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.product == null ? 'Add new product' : 'Edit product',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 18),
+            TextFormField(
+              controller: _name,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(labelText: 'Product name'),
+              validator: requiredField,
+            ),
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) => constraints.maxWidth < 380
+                  ? Column(
+                      children: [
+                        TextFormField(
+                          controller: _sku,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(labelText: 'SKU'),
+                          validator: requiredField,
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _category,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Category',
+                          ),
+                          validator: requiredField,
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _sku,
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(labelText: 'SKU'),
                             validator: requiredField,
                           ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            controller: category,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _category,
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
                               labelText: 'Category',
                             ),
                             validator: requiredField,
                           ),
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: sku,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'SKU',
-                              ),
-                              validator: requiredField,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextFormField(
-                              controller: category,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Category',
-                              ),
-                              validator: requiredField,
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: price,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(labelText: 'Price'),
-                      validator: positiveNumber,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: stock,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Stock'),
-                      validator: wholeNumber,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _price,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              FilledButton(
-                key: const ValueKey('save-product'),
-                onPressed: () async {
-                  if (!key.currentState!.validate()) return;
-                  final controller = context.read<StoreController>();
-                  if (product == null) {
-                    await controller.addProduct(
-                      name: name.text.trim(),
-                      sku: sku.text.trim(),
-                      category: category.text.trim(),
-                      price: double.parse(price.text),
-                      stock: int.parse(stock.text),
-                    );
-                  } else {
-                    await controller.updateProduct(
-                      product.copyWith(
-                        name: name.text.trim(),
-                        sku: sku.text.trim(),
-                        category: category.text.trim(),
-                        price: double.parse(price.text),
-                        stock: int.parse(stock.text),
-                      ),
-                    );
-                  }
-                  if (sheetContext.mounted) Navigator.pop(sheetContext);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Text(
-                    product == null ? 'Save product' : 'Save changes',
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(labelText: 'Price'),
+                    validator: positiveNumber,
                   ),
                 ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextFormField(
+                    controller: _stock,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Stock'),
+                    validator: wholeNumber,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            FilledButton(
+              key: const ValueKey('save-product'),
+              onPressed: _save,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Text(
+                  widget.product == null ? 'Save product' : 'Save changes',
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     ),
   );
-  name.dispose();
-  sku.dispose();
-  category.dispose();
-  price.dispose();
-  stock.dispose();
 }
 
 Future<void> confirmDeleteProduct(BuildContext context, Product product) async {
